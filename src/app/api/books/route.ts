@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
           where: { userId: user.id },
           select: { googleBooksId: true },
         });
-        const swipedIds = new Set(swipedBooks.map((s) => s.googleBooksId));
+        const swipedIds = new Set(swipedBooks.map((s: { googleBooksId: string }) => s.googleBooksId));
         const filtered = books.filter((b) => !swipedIds.has(b.id));
         return NextResponse.json({ books: filtered });
       }
