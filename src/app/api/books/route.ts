@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchBooksByGenre } from "@/lib/books";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -21,7 +19,9 @@ export async function GET(req: NextRequest) {
           where: { userId: user.id },
           select: { googleBooksId: true },
         });
-        const swipedIds = new Set(swipedBooks.map((s: { googleBooksId: string }) => s.googleBooksId));
+        const swipedIds = new Set(
+          swipedBooks.map((s: { googleBooksId: string }) => s.googleBooksId)
+        );
         const filtered = books.filter((b) => !swipedIds.has(b.id));
         return NextResponse.json({ books: filtered });
       }
