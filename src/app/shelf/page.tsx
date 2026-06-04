@@ -40,7 +40,7 @@ export default function ShelfPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
+    <div className="bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
         <Navbar />
         <main className="px-8 py-8 max-w-5xl mx-auto">
             {loading ? (

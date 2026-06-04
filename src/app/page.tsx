@@ -61,46 +61,39 @@ let cachedStack: Book[] = [];
 function SkeletonLoader() {
   return (
     <div className="flex flex-col lg:flex-row items-start justify-center gap-16 w-full max-w-5xl mx-auto animate-pulse">
-
-      {/* Left col: card + buttons */}
-      <div className="flex flex-col items-center gap-4 flex-shrink-0">
-        <div className="w-[240px] h-[360px] rounded-2xl bg-stone-200 dark:bg-stone-800" />
-        <div className="flex gap-3 w-[240px]">
+      {/* Left col: responsive card skeleton matching mobile upgrades */}
+      <div className="flex flex-col items-center gap-6 flex-shrink-0 w-full lg:w-auto">
+        <div className="w-[85vw] h-[120vw] sm:w-[280px] sm:h-[420px] max-w-sm rounded-2xl bg-stone-200 dark:bg-stone-800" />
+        <div className="flex gap-4 w-[85vw] sm:w-full max-w-sm">
           <div className="flex-1 h-[52px] rounded-full bg-stone-200 dark:bg-stone-800" />
           <div className="flex-1 h-[52px] rounded-full bg-stone-200 dark:bg-stone-800" />
         </div>
         <div className="h-3 w-16 rounded-full bg-stone-200 dark:bg-stone-800" />
       </div>
 
-      {/* Right col: details */}
-      <div className="flex-1 min-w-0 pt-1 flex flex-col gap-4">
-        {/* Title block */}
+      {/* Right col: details skeleton */}
+      <div className="flex-1 min-w-0 pt-1 flex flex-col gap-4 w-full">
         <div className="flex flex-col gap-2">
           <div className="h-8 w-3/4 rounded-full bg-stone-200 dark:bg-stone-800" />
           <div className="h-8 w-1/2 rounded-full bg-stone-200 dark:bg-stone-800" />
           <div className="h-4 w-1/3 rounded-full bg-stone-200 dark:bg-stone-800 mt-1" />
         </div>
-        {/* Stars */}
         <div className="flex gap-1">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="w-3.5 h-3.5 rounded-sm bg-stone-200 dark:bg-stone-800" />
           ))}
         </div>
-        {/* Genre pills */}
         <div className="flex gap-1.5">
           {[80, 64, 96, 72].map((w, i) => (
             <div key={i} className="h-6 rounded-full bg-stone-200 dark:bg-stone-800" style={{ width: w }} />
           ))}
         </div>
-        {/* Divider */}
         <div className="h-px bg-stone-200 dark:bg-stone-800" />
-        {/* Description lines */}
         <div className="flex flex-col gap-2">
           {["100%", "100%", "100%", "100%", "100%", "60%"].map((w, i) => (
             <div key={i} className="h-3 rounded-full bg-stone-200 dark:bg-stone-800" style={{ width: w }} />
           ))}
         </div>
-        {/* Page count + year */}
         <div className="flex gap-5">
           <div className="h-3 w-20 rounded-full bg-stone-200 dark:bg-stone-800" />
           <div className="h-3 w-12 rounded-full bg-stone-200 dark:bg-stone-800" />
@@ -192,29 +185,29 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-100 dark:bg-stone-950 text-black dark:text-stone-100">
-        <Navbar />
-        <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-            {loading ? (
-            <SkeletonLoader />
-            ) : books.length === 0 ? (
-            <div className="flex flex-col items-center gap-3">
-                <p className="text-stone-400">No books found.</p>
-                <button
-                onClick={() => loadBooks(true)}
-                className="text-sm text-stone-900 dark:text-stone-100 hover:opacity-60 transition-opacity"
-                >
-                Try again →
-                </button>
-            </div>
-            ) : (
-            <SwipeStack
-                books={books}
-                onEmpty={() => loadBooks(true)}
-                onStackChange={(stack) => { cachedStack = stack; }}
-            />
-            )}
-        </main>
+    <div className="flex flex-col min-h-[100dvh] w-full bg-stone-100 dark:bg-stone-950 text-black dark:text-stone-100 isolation-isolate">
+      <Navbar />
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-10 w-full">
+        {loading ? (
+          <SkeletonLoader />
+        ) : books.length === 0 ? (
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-stone-400">No books found.</p>
+            <button
+              onClick={() => loadBooks(true)}
+              className="text-sm text-stone-900 dark:text-stone-100 hover:opacity-60 transition-opacity"
+            >
+              Try again →
+            </button>
+          </div>
+        ) : (
+          <SwipeStack
+            books={books}
+            onEmpty={() => loadBooks(true)}
+            onStackChange={(stack) => { cachedStack = stack; }}
+          />
+        )}
+      </main>
     </div>
   );
 }

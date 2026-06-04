@@ -41,8 +41,7 @@ async function hardcoverQuery(query: string, variables: Record<string, any> = {}
   }
 }
 
-// Map our genre names to Hardcover tag names
-const GENRE_TAG_MAP: Record<string, string[]> = {
+export const GENRE_TAG_MAP: Record<string, string[]> = {
   "Fantasy": ["Fantasy", "Epic Fantasy", "High Fantasy", "Urban Fantasy"],
   "Science Fiction": ["Science Fiction", "Sci-Fi", "Space Opera", "Cyberpunk"],
   "Mystery": ["Mystery", "Mystery Fiction", "Cozy Mystery"],
@@ -60,20 +59,78 @@ const GENRE_TAG_MAP: Record<string, string[]> = {
   "Fiction": ["Literary Fiction", "Contemporary Fiction"],
 };
 
-export async function fetchBooksByGenre(genre: string, maxResults = 10): Promise<Book[]> {
+const NOISE_TAGS = new Set([
+  "funny", "fast", "slow", "medium", "dark", "hopeful", "emotional",
+  "inspiring", "lighthearted", "mysterious", "relaxing", "tense",
+  "Plot driven", "Character driven", "A mix driven",
+  "Strong Character Development", "Weak Character Development",
+  "Loveable Characters", "Unloveable Characters",
+  "Diverse Characters", "Not Diverse Characters",
+  "challenging", "reflective", "sad", "informative", "Maybe",
+  "Adventurous", "Jazz", "War",
+]);
+
+function mapBook(book: any): Book {
+  const uniqueTags = [...new Set(
+    (book.taggings ?? [])
+      .map((t: any) => t.tag?.tag)
+      .filter((t: any): t is string =>
+        typeof t === "string" &&
+        t.length > 0 &&
+        t.length < 30 &&
+        !NOISE_TAGS.has(t) &&
+        !t.includes("/")
+      )
+  )] as string[];
+
+  return {
+    id: String(book.id),
+    title: book.title ?? "Unknown Title",
+    author: book.contributions?.[0]?.author?.name ?? "Unknown Author",
+    coverUrl: book.image?.url ?? "",
+    description: book.description ?? "",
+    rating: book.rating ?? null,
+    genres: uniqueTags.slice(0, 5),
+    pageCount: book.pages ?? null,
+    publishedDate: book.release_year ? String(book.release_year) : null,
+    subjects: uniqueTags.slice(5, 12),
+    editions: null,
+    openLibraryKey: null,
+  };
+}
+
+function isUsableBook(book: Book): boolean {
+  return (
+    book.coverUrl !== "" &&
+    book.description.length > 100 &&
+    book.title !== "Unknown Title" &&
+    book.author !== "Unknown Author"
+  );
+}
+
+/**
+ * Fetch books for a single genre with offset support.
+ * Used when you want per-genre control (e.g. weighted fetching).
+ */
+export async function fetchBooksByGenre(
+  genre: string,
+  limit = 10,
+  offset = 0
+): Promise<Book[]> {
   const tags = GENRE_TAG_MAP[genre] ?? [genre];
 
-  // Use _in to match any of the tag variants
   const query = `
-    query BooksByGenre($tags: [String!]!, $limit: Int!) {
+    query BooksByGenre($tags: [String!]!, $limit: Int!, $offset: Int!) {
       books(
         where: {
           taggings: { tag: { tag: { _in: $tags } } }
           image: { url: { _is_null: false } }
           pages: { _gte: 100 }
+          rating: { _gte: 3.5 }
         }
         order_by: { ratings_count: desc }
         limit: $limit
+        offset: $offset
       ) {
         id
         title
@@ -83,90 +140,6 @@ export async function fetchBooksByGenre(genre: string, maxResults = 10): Promise
         rating
         ratings_count
         image { url }
-        contributions {
-          author { name }
-        }
-        taggings {
-          tag { tag }
-        }
-      }
-    }
-  `;
-
-  try {
-    const data = await hardcoverQuery(query, { tags, limit: maxResults * 2 });
-
-    if (data.errors) {
-      console.error("Hardcover errors:", data.errors);
-      return [];
-    }
-
-    const books = data?.data?.books ?? [];
-
-    // Deduplicate tags and filter noise
-    const NOISE_TAGS = new Set([
-      "funny", "fast", "slow", "medium", "dark", "hopeful", "emotional",
-      "inspiring", "lighthearted", "mysterious", "relaxing", "tense",
-      "Plot driven", "Character driven", "A mix driven",
-      "Strong Character Development", "Weak Character Development",
-      "Loveable Characters", "Unloveable Characters",
-      "Diverse Characters", "Not Diverse Characters",
-    ]);
-
-    return books
-      .map((book: any) => {
-        const uniqueTags = [...new Set(
-          (book.taggings ?? [])
-            .map((t: any) => t.tag?.tag)
-            .filter((t: string) => t && !NOISE_TAGS.has(t) && !t.includes("/") && t.length < 30)
-        )] as string[];
-
-        return {
-          id: String(book.id),
-          title: book.title ?? "Unknown Title",
-          author: book.contributions?.[0]?.author?.name ?? "Unknown Author",
-          coverUrl: book.image?.url ?? "",
-          description: book.description ?? "No description available.",
-          rating: book.rating ?? null,
-          genres: uniqueTags.slice(0, 5),
-          pageCount: book.pages ?? null,
-          publishedDate: book.release_year ? String(book.release_year) : null,
-          subjects: uniqueTags.slice(5, 12),
-          editions: null,
-          openLibraryKey: null,
-        };
-      })
-      .filter((book: Book) =>
-        book.coverUrl !== "" &&
-        book.description.length > 150 &&
-        book.title !== "Unknown Title"
-      )
-      .slice(0, maxResults);
-  } catch (err) {
-    console.error("Hardcover fetch error:", err);
-    return [];
-  }
-}
-
-export async function fetchBulkBooks(genres: string[], limit = 40): Promise<Book[]> {
-  const query = `
-    query BulkBooks($limit: Int!) {
-      books(
-        where: {
-          image: { url: { _is_null: false } }
-          pages: { _gte: 50 }
-          rating: { _gte: 3.5 }
-        }
-        order_by: { ratings_count: desc }
-        limit: $limit
-      ) {
-        id
-        title
-        description
-        release_year
-        pages
-        rating
-        image { url }
         contributions { author { name } }
         taggings { tag { tag } }
       }
@@ -174,57 +147,62 @@ export async function fetchBulkBooks(genres: string[], limit = 40): Promise<Book
   `;
 
   try {
-    const data = await hardcoverQuery(query, { limit });
+    const data = await hardcoverQuery(query, { tags, limit: limit * 2, offset });
     if (data.errors) {
-      console.error("Hardcover errors:", data.errors);
+      console.error(`Hardcover errors for genre "${genre}":`, data.errors);
       return [];
     }
-
-    const books = data?.data?.books ?? [];
-
-    const NOISE_TAGS = new Set([
-      "funny", "fast", "slow", "medium", "dark", "hopeful", "emotional",
-      "inspiring", "lighthearted", "mysterious", "relaxing", "tense",
-      "Plot driven", "Character driven", "A mix driven",
-      "Strong Character Development", "Weak Character Development",
-      "Loveable Characters", "Unloveable Characters",
-      "Diverse Characters", "Not Diverse Characters",
-    ]);
-
-    // Filter to only books matching user's genres
-    const genreTags = genres.flatMap((g) => GENRE_TAG_MAP[g] ?? [g]).map((t) => t.toLowerCase());
-
-    return books
-      .map((book: any) => {
-        const uniqueTagList = [...new Set(
-          (book.taggings ?? [])
-            .map((t: any) => t.tag?.tag)
-            .filter((t: string) => t && !NOISE_TAGS.has(t) && !t.includes("/") && t.length < 30)
-        )] as string[];
-
-        return {
-          id: String(book.id),
-          title: book.title ?? "Unknown Title",
-          author: book.contributions?.[0]?.author?.name ?? "Unknown Author",
-          coverUrl: book.image?.url ?? "",
-          description: book.description ?? "No description available.",
-          rating: book.rating ?? null,
-          genres: uniqueTagList.slice(0, 5),
-          pageCount: book.pages ?? null,
-          publishedDate: book.release_year ? String(book.release_year) : null,
-          subjects: uniqueTagList.slice(5, 12),
-          editions: null,
-          openLibraryKey: null,
-        };
-      })
-      .filter((book: Book) => {
-        if (!book.coverUrl || book.description.length < 100) return false;
-        // Keep if any of the book's genres match user preferences
-        if (genreTags.length === 0) return true;
-        return book.genres.some((g) => genreTags.some((t) => g.toLowerCase().includes(t)));
-      });
+    return (data?.data?.books ?? [])
+      .map(mapBook)
+      .filter(isUsableBook)
+      .slice(0, limit);
   } catch (err) {
-    console.error("Hardcover bulk fetch error:", err);
+    console.error(`Hardcover fetch error for genre "${genre}":`, err);
     return [];
   }
+}
+
+/**
+ * Fetch books across multiple genres in parallel, with per-genre quotas
+ * based on weights. Higher-weighted genres get more slots.
+ *
+ * @param genreWeights  Record of genre -> weight (higher = more books fetched)
+ * @param totalLimit    Total books to return across all genres
+ * @param offset        Pagination offset (randomized by caller for variety)
+ */
+export async function fetchBulkBooks(
+  genreWeights: Record<string, number>,
+  totalLimit = 60,
+  offset = 0
+): Promise<Book[]> {
+  const genres = Object.keys(genreWeights);
+  if (genres.length === 0) return [];
+
+  const totalWeight = Object.values(genreWeights).reduce((a, b) => a + b, 0);
+
+  // Assign per-genre limits proportional to weight, minimum 5 each
+  const perGenreLimits: Record<string, number> = {};
+  for (const genre of genres) {
+    const share = genreWeights[genre] / totalWeight;
+    perGenreLimits[genre] = Math.max(5, Math.round(share * totalLimit));
+  }
+
+  // Fetch all genres in parallel
+  const results = await Promise.all(
+    genres.map((genre) => fetchBooksByGenre(genre, perGenreLimits[genre], offset))
+  );
+
+  // Merge, deduplicate by id
+  const seen = new Set<string>();
+  const merged: Book[] = [];
+  for (const books of results) {
+    for (const book of books) {
+      if (!seen.has(book.id)) {
+        seen.add(book.id);
+        merged.push(book);
+      }
+    }
+  }
+
+  return merged;
 }

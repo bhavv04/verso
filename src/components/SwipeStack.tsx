@@ -50,52 +50,55 @@ export default function SwipeStack({ books, onEmpty, onStackChange }: SwipeStack
   return (
     <div className="flex flex-col lg:flex-row items-start justify-center gap-16 w-full max-w-5xl mx-auto">
 
-      {/* Card + Buttons */}
-      <div className="flex flex-col items-center gap-4 flex-shrink-0">
-        <div className="relative w-[240px] h-[360px]">
-          <AnimatePresence custom={exitDirectionRef.current}>
-            {stack.slice(-1).map((book) => (
-              <motion.div
-                key={book.id}
-                custom={exitDirectionRef.current}
-                className="absolute inset-0"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                variants={{
-                  exit: (direction: "LEFT" | "RIGHT") => ({
-                    x: direction === "RIGHT" ? 400 : -400,
-                    rotate: direction === "RIGHT" ? 25 : -25,
-                    opacity: 0,
-                    transition: { duration: 0.3 },
-                  }),
-                }}
-                exit="exit"
-              >
-                <BookCard book={book} onSwipe={handleSwipe} isTop={true} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+    {/* Card + Buttons */}
+    <div className="flex flex-col items-center gap-6 flex-shrink-0 w-full sm:w-auto">
+    {/* REMOVED: w-[240px] h-[360px] */}
+    {/* ADDED RESPONSIVE SIZING BELOW */}
+    <div className="relative w-[85vw] h-[120vw] sm:w-[280px] sm:h-[420px] max-w-sm">
+        <AnimatePresence custom={exitDirectionRef.current}>
+        {stack.slice(-1).map((book) => (
+            <motion.div
+            key={book.id}
+            custom={exitDirectionRef.current}
+            className="absolute inset-0"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            variants={{
+                exit: (direction: "LEFT" | "RIGHT") => ({
+                x: direction === "RIGHT" ? 400 : -400,
+                rotate: direction === "RIGHT" ? 25 : -25,
+                opacity: 0,
+                transition: { duration: 0.3 },
+                }),
+            }}
+            exit="exit"
+            >
+            <BookCard book={book} onSwipe={handleSwipe} isTop={true} />
+            </motion.div>
+        ))}
+        </AnimatePresence>
+    </div>
 
-        <div className="flex gap-3">
+    {/* Button block matches the new card layout width perfectly */}
+    <div className="flex gap-4 w-[85vw] sm:w-full max-w-sm">
         <button
-            onClick={() => handleSwipe("LEFT")}
-            aria-label="Pass"
-            className="flex-1 flex items-center justify-center p-4 rounded-full bg-black/5 dark:bg-white/5 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-500 active:scale-95 transition-all group touch-manipulation"
+        onClick={() => handleSwipe("LEFT")}
+        aria-label="Pass"
+        className="flex-1 flex items-center justify-center p-4 rounded-full bg-black/5 dark:bg-white/5 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-500 active:scale-95 transition-all group touch-manipulation"
         >
-            <X className="w-5 h-5 text-black/40 dark:text-white/40 group-hover:text-red-500 transition-colors" strokeWidth={2.5} />
+        <X className="w-5 h-5 text-black/40 dark:text-white/40 group-hover:text-red-500 transition-colors" strokeWidth={2.5} />
         </button>
         <button
-            onClick={() => handleSwipe("RIGHT")}
-            aria-label="Save"
-            className="flex-1 flex items-center justify-center p-4 rounded-full bg-amber-500 hover:bg-amber-400 active:scale-95 shadow-sm transition-all touch-manipulation"
+        onClick={() => handleSwipe("RIGHT")}
+        aria-label="Save"
+        className="flex-1 flex items-center justify-center p-4 rounded-full bg-amber-500 hover:bg-amber-400 active:scale-95 shadow-sm transition-all touch-manipulation"
         >
-            <Heart className="w-5 h-5 text-white fill-white" strokeWidth={2} />
+        <Heart className="w-5 h-5 text-white fill-white" strokeWidth={2} />
         </button>
-        </div>
+    </div>
 
-        <p className="text-black/20 dark:text-white/20 text-xs">{stack.length} in queue</p>
-      </div>
+    <p className="text-black/20 dark:text-white/20 text-xs">{stack.length} in queue</p>
+    </div>
 
       {/* Details */}
       {currentBook && (

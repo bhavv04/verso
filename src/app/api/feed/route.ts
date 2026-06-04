@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { fetchBulkBooks, Book } from "@/lib/books";
+import { fetchBulkBooks, GENRE_TAG_MAP, Book } from "@/lib/books";
 
-const GENERIC = new Set(["Fiction", "Juvenile Fiction", "Juvenile Nonfiction", "Nonfiction", "General"]);
 const FALLBACK_GENRES = ["Fantasy", "Science Fiction", "Mystery", "Thriller", "Historical Fiction"];
 
 const RELATED_GENRES: Record<string, string[]> = {
@@ -24,8 +23,30 @@ const RELATED_GENRES: Record<string, string[]> = {
   "Fiction": ["Classic", "Historical Fiction"],
 };
 
+// Tags that are too generic to use as genre signals
+const GENERIC = new Set([
+  "Fiction", "Nonfiction", "Juvenile Fiction", "Juvenile Nonfiction", "General",
+  "Young Adult", "Middle Grade", "Literature",
+]);
+
 function shuffle<T>(arr: T[]): T[] {
-  return arr.map((v) => ({ v, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ v }) => v);
+  return arr
+    .map((v) => ({ v, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ v }) => v);
+}
+
+// Normalize a raw tag string to a known genre key if possible
+function resolveGenre(tag: string): string | null {
+  const cleaned = tag.split("/")[0].trim();
+  if (GENERIC.has(cleaned)) return null;
+  // Direct match
+  if (cleaned in GENRE_TAG_MAP) return cleaned;
+  // Reverse match — check if this tag is in any genre's tag list
+  for (const [genre, tags] of Object.entries(GENRE_TAG_MAP)) {
+    if (tags.some((t) => t.toLowerCase() === cleaned.toLowerCase())) return genre;
+  }
+  return null;
 }
 
 export async function GET() {
@@ -35,55 +56,90 @@ export async function GET() {
   const user = await prisma.user.findUnique({
     where: { clerkId: userId },
     include: {
-        genres: true,
-        shelf: { select: { genres: true, googleBooksId: true } },
-        swipes: { select: { googleBooksId: true } },
+      genres: true,
+      shelf: { select: { genres: true, googleBooksId: true } },
+      swipes: { select: { googleBooksId: true, direction: true } },
     },
-    });
+  });
 
   if (!user) return NextResponse.json({ books: [] });
 
-  // Build weights
+  const userGenreNames = new Set(user.genres.map((g) => g.genre));
+
+  // --- Build genre weights ---
   const weights: Record<string, number> = {};
+
+  // Base weight from explicit user genre selection
   for (const g of user.genres) {
-    weights[g.genre] = (weights[g.genre] ?? 0) + 5;
+    weights[g.genre] = (weights[g.genre] ?? 0) + 10;
   }
+
+  // Boost from RIGHT swipes (liked books) — expand beyond user's explicit genres
+  const rightSwipedIds = new Set(
+    user.swipes.filter((s) => s.direction === "RIGHT").map((s) => s.googleBooksId)
+  );
   for (const book of user.shelf) {
-    for (const genre of book.genres) {
-      const n = genre.split("/")[0].trim();
-      if (!GENERIC.has(n)) weights[n] = (weights[n] ?? 0) + 1;
+    const isLiked = rightSwipedIds.has(book.googleBooksId);
+    const boost = isLiked ? 3 : 1; // liked books boost more than just shelved
+    for (const tag of book.genres) {
+      const genre = resolveGenre(tag);
+      if (!genre) continue;
+      weights[genre] = (weights[genre] ?? 0) + boost;
     }
   }
+
+  // Penalize genres from LEFT swipes (disliked books)
+  // Only penalize genres not in user's explicit selection
+  const leftSwipes = user.swipes.filter((s) => s.direction === "LEFT");
+  // We don't have genre data on swipes directly, so we'll rely on shelf signal above
+  // Future: store genres on Swipe model too for stronger signal
+
+  // Expand into related genres — weighted proportionally, not binary
   for (const [genre, weight] of Object.entries(weights)) {
     if (GENERIC.has(genre)) continue;
-    for (const r of RELATED_GENRES[genre] ?? []) {
-      if (!weights[r]) weights[r] = Math.max(1, Math.floor(weight * 0.2));
-    }
-  }
-  const specific = Object.keys(weights).filter((g) => !GENERIC.has(g));
-  if (specific.length > 0) {
-    for (const g of GENERIC) delete weights[g];
-  }
-
-  let topGenres = Object.entries(weights)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
-    .map(([g]) => g);
-
-  if (topGenres.length < 3) {
-    for (const g of FALLBACK_GENRES) {
-      if (!topGenres.includes(g)) topGenres.push(g);
-      if (topGenres.length >= 5) break;
+    for (const related of RELATED_GENRES[genre] ?? []) {
+      if (!weights[related]) {
+        // Only add related genres if they're explicitly selected OR
+        // the source genre has strong enough signal
+        if (userGenreNames.has(related) || weight >= 10) {
+          weights[related] = Math.max(1, Math.floor(weight * 0.15));
+        }
+      }
     }
   }
 
-    const swipedIds = new Set([
+  // Remove genres with negligible weight
+  for (const genre of Object.keys(weights)) {
+    if (weights[genre] < 1) delete weights[genre];
+  }
+
+  // Cap to top 6 genres by weight
+  const topGenreWeights: Record<string, number> = Object.fromEntries(
+    Object.entries(weights)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+  );
+
+  // Fallback if no genres resolved
+  if (Object.keys(topGenreWeights).length === 0) {
+    const fallbackWeights = Object.fromEntries(FALLBACK_GENRES.map((g) => [g, 10]));
+    const fallback = await fetchBulkBooks(fallbackWeights, 60, 0);
+    return NextResponse.json({ books: shuffle(fallback), genres: FALLBACK_GENRES });
+  }
+
+  const swipedIds = new Set([
     ...user.swipes.map((s) => s.googleBooksId),
     ...user.shelf.map((s) => s.googleBooksId),
-    ]);
+  ]);
 
-  // Single bulk query — fetch 60 books across all genres at once
-  const books = await fetchBulkBooks(topGenres, 60);
+  // Randomize offset for variety — but keep it small enough to stay within results
+  // Use a low max offset so we don't accidentally skip past all results
+  const offset = Math.floor(Math.random() * 3) * 20; // 0, 20, or 40
+
+  console.log("userGenres:", [...userGenreNames]);
+  console.log("topGenreWeights:", topGenreWeights);
+
+  const books = await fetchBulkBooks(topGenreWeights, 60, offset);
 
   const seen = new Set<string>();
   const filtered: Book[] = books.filter((b) => {
@@ -92,11 +148,24 @@ export async function GET() {
     return true;
   });
 
-  // Fallback if bulk returns nothing
+  // If we got nothing (e.g. user has swiped everything), try offset 0 with user genres
   if (filtered.length === 0) {
-    const fallback = await fetchBulkBooks(FALLBACK_GENRES, 60);
+    const retry = await fetchBulkBooks(topGenreWeights, 60, 0);
+    const retryFiltered = retry.filter((b) => !swipedIds.has(b.id));
+    if (retryFiltered.length > 0) {
+      return NextResponse.json({
+        books: shuffle(retryFiltered),
+        genres: Object.keys(topGenreWeights),
+      });
+    }
+    // True fallback — user has exhausted their genres
+    const fallbackWeights = Object.fromEntries(FALLBACK_GENRES.map((g) => [g, 10]));
+    const fallback = await fetchBulkBooks(fallbackWeights, 60, 0);
     return NextResponse.json({ books: shuffle(fallback), genres: FALLBACK_GENRES });
   }
 
-  return NextResponse.json({ books: shuffle(filtered), genres: topGenres });
+  return NextResponse.json({
+    books: shuffle(filtered),
+    genres: Object.keys(topGenreWeights),
+  });
 }

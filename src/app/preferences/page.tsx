@@ -22,22 +22,23 @@ export default function PreferencesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSave = async () => {
+    const handleSave = async () => {
     setSaving(true);
     await fetch("/api/onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ genres }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ genres }),
     });
+    localStorage.removeItem("verso_feed"); // ← bust the cache when changing genres
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  };
+    };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 p-10">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
         <Navbar />
-        <main className="max-w-lg mx-auto">
+        <main className="max-w-lg mx-auto p-10">
             <h1 className="text-2xl font-bold mb-1">Your genres</h1>
             <p className="text-stone-500 dark:text-stone-400 text-sm mb-8">
             Pick up to 5 genres. Your feed weights these alongside books you've liked.

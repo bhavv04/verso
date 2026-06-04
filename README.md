@@ -2,11 +2,11 @@
 
 > Tinder for books. Swipe through titles, build your shelf, discover what to read next.
 
-![Homepage Screenshot](public/homepage.png)
+![Homepage Screenshot](public/verso1.png)
 
 First prototype, UI is still under developement with more features to come.
 
-![Shelf Preview](public/shelf.png)
+![Shelf Preview](public/verso2.png)
 
 ## Overview
 
