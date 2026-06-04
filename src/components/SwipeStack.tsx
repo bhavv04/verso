@@ -14,117 +14,105 @@ interface SwipeStackProps {
 
 export default function SwipeStack({ books, onEmpty, onStackChange }: SwipeStackProps) {
   const [stack, setStack] = useState<Book[]>(books);
-  const [lastDirection, setLastDirection] = useState<"LEFT" | "RIGHT" | null>(null);
   const [expanded, setExpanded] = useState(false);
-
   const exitDirectionRef = useRef<"LEFT" | "RIGHT">("LEFT");
-
   const currentBook = stack[stack.length - 1];
 
-    const handleSwipe = async (direction: "LEFT" | "RIGHT") => {
-  const book = stack[stack.length - 1];
-  if (!book) return;
+  const handleSwipe = async (direction: "LEFT" | "RIGHT") => {
+    const book = stack[stack.length - 1];
+    if (!book) return;
 
-  exitDirectionRef.current = direction; // ← set ref immediately
-  setLastDirection(direction);
-  setExpanded(false);
-  const newStack = stack.slice(0, -1);
-  setStack(newStack);
-  onStackChange?.(newStack);
+    exitDirectionRef.current = direction;
+    setExpanded(false);
+    const newStack = stack.slice(0, -1);
+    setStack(newStack);
+    onStackChange?.(newStack);
+    if (stack.length === 1) onEmpty();
 
-  if (stack.length === 1) onEmpty();
+    await fetch("/api/swipe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ googleBooksId: book.id, direction, book }),
+    });
 
-  await fetch("/api/swipe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ googleBooksId: book.id, direction, book }),
-  });
-
-  if (direction === "RIGHT") {
-    try {
-      const raw = localStorage.getItem("verso_feed");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        parsed.books = parsed.books.filter((b: any) => b.id !== book.id);
-        localStorage.setItem("verso_feed", JSON.stringify(parsed));
-      }
-    } catch {}
-  }
-};
+    if (direction === "RIGHT") {
+      try {
+        const raw = localStorage.getItem("verso_feed");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          parsed.books = parsed.books.filter((b: any) => b.id !== book.id);
+          localStorage.setItem("verso_feed", JSON.stringify(parsed));
+        }
+      } catch {}
+    }
+  };
 
   return (
     <div className="flex flex-col lg:flex-row items-start justify-center gap-16 w-full max-w-5xl mx-auto">
 
-      {/* LEFT — Card + Buttons */}
-      <div className="flex flex-col items-center gap-5 flex-shrink-0">
+      {/* Card + Buttons */}
+      <div className="flex flex-col items-center gap-4 flex-shrink-0">
         <div className="relative w-[240px] h-[360px]">
-
-            <AnimatePresence custom={exitDirectionRef.current}>
-            {stack.slice(-1).map((book) => {
-                return (
-                <motion.div
-                    key={book.id}
-                    custom={exitDirectionRef.current}
-                    className="absolute inset-0"
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    variants={{
-                    exit: (direction: "LEFT" | "RIGHT") => ({
-                        x: direction === "RIGHT" ? 400 : -400,
-                        rotate: direction === "RIGHT" ? 25 : -25,
-                        opacity: 0,
-                        transition: { duration: 0.3 },
-                    }),
-                    }}
-                    exit="exit"
-                >
-                    <BookCard book={book} onSwipe={handleSwipe} isTop={true} />
-                </motion.div>
-                );
-            })}
-            </AnimatePresence>
-            
+          <AnimatePresence custom={exitDirectionRef.current}>
+            {stack.slice(-1).map((book) => (
+              <motion.div
+                key={book.id}
+                custom={exitDirectionRef.current}
+                className="absolute inset-0"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                variants={{
+                  exit: (direction: "LEFT" | "RIGHT") => ({
+                    x: direction === "RIGHT" ? 400 : -400,
+                    rotate: direction === "RIGHT" ? 25 : -25,
+                    opacity: 0,
+                    transition: { duration: 0.3 },
+                  }),
+                }}
+                exit="exit"
+              >
+                <BookCard book={book} onSwipe={handleSwipe} isTop={true} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
 
-        {/* Buttons */}
-        <div className="flex gap-3 w-full">
-          <button
+        <div className="flex gap-3">
+        <button
             onClick={() => handleSwipe("LEFT")}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#e8e4dc] dark:border-[#2a2825] bg-white dark:bg-[#1a1916] hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-200 dark:hover:border-red-900 transition-all"
-          >
-            <X className="w-4 h-4 text-[#9ca3af]" />
-            <span className="text-sm text-[#6b7280] dark:text-[#9ca3af]">Pass</span>
-          </button>
-          <button
+            aria-label="Pass"
+            className="flex-1 flex items-center justify-center p-4 rounded-full bg-black/5 dark:bg-white/5 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-500 active:scale-95 transition-all group touch-manipulation"
+        >
+            <X className="w-5 h-5 text-black/40 dark:text-white/40 group-hover:text-red-500 transition-colors" strokeWidth={2.5} />
+        </button>
+        <button
             onClick={() => handleSwipe("RIGHT")}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#e8e4dc] dark:border-[#2a2825] bg-white dark:bg-[#1a1916] hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-200 dark:hover:border-amber-900 transition-all"
-          >
-            <Heart className="w-4 h-4 text-amber-500" />
-            <span className="text-sm text-[#6b7280] dark:text-[#9ca3af]">Save</span>
-          </button>
+            aria-label="Save"
+            className="flex-1 flex items-center justify-center p-4 rounded-full bg-amber-500 hover:bg-amber-400 active:scale-95 shadow-sm transition-all touch-manipulation"
+        >
+            <Heart className="w-5 h-5 text-white fill-white" strokeWidth={2} />
+        </button>
         </div>
 
-        <p className="text-[#c8c0b0] dark:text-[#4a4845] text-xs">{stack.length} in queue</p>
+        <p className="text-black/20 dark:text-white/20 text-xs">{stack.length} in queue</p>
       </div>
 
-      {/* RIGHT — Details */}
+      {/* Details */}
       {currentBook && (
         <motion.div
           key={currentBook.id}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="flex-1 min-w-0 pt-1 flex flex-col gap-5"
+          className="flex-1 min-w-0 pt-1 flex flex-col gap-4"
         >
-          {/* Title + Author */}
           <div>
-            <h2 className="text-3xl font-bold text-[#1a1a2e] dark:text-[#f0ece4] leading-tight tracking-tight">
+            <h2 className="text-3xl font-bold text-black dark:text-white leading-tight tracking-tight">
               {currentBook.title}
             </h2>
-            <p className="text-amber-600 dark:text-amber-400 font-medium mt-1">{currentBook.author}</p>
+            <p className="text-amber-500 font-medium mt-1">{currentBook.author}</p>
           </div>
 
-          {/* Rating */}
           {currentBook.rating && (
             <div className="flex items-center gap-2">
               <div className="flex gap-0.5">
@@ -134,72 +122,80 @@ export default function SwipeStack({ books, onEmpty, onStackChange }: SwipeStack
                     className={`w-3.5 h-3.5 ${
                       star <= Math.round(currentBook.rating!)
                         ? "text-amber-400 fill-amber-400"
-                        : "text-[#e8e4dc] dark:text-[#2a2825] fill-[#e8e4dc] dark:fill-[#2a2825]"
+                        : "text-black/10 dark:text-white/10 fill-black/10 dark:fill-white/10"
                     }`}
                   />
                 ))}
               </div>
-              <span className="text-[#9ca3af] text-xs">{currentBook.rating.toFixed(1)}</span>
+              <span className="text-black/30 dark:text-white/30 text-xs">{currentBook.rating.toFixed(1)}</span>
             </div>
           )}
 
-          {/* Genre tags */}
           {currentBook.genres.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {currentBook.genres.slice(0, 4).map((g) => (
-                <span
-                  key={g}
-                  className="px-2.5 py-1 rounded-full text-xs border border-[#e8e4dc] dark:border-[#2a2825] text-[#6b7280] dark:text-[#9ca3af] bg-white dark:bg-[#1a1916]"
-                >
+                <span key={g} className="px-2.5 py-1 rounded-full text-xs border border-black/10 dark:border-white/10 text-black/40 dark:text-white/40">
                   {g}
                 </span>
               ))}
             </div>
           )}
 
-          {/* Divider */}
-          <div className="h-px bg-[#e8e4dc] dark:bg-[#2a2825]" />
+          <div className="h-px bg-black/8 dark:bg-white/8" />
 
-          {/* Description */}
           <div>
-            <p className={`text-[#4b5563] dark:text-[#9ca3af] text-sm leading-relaxed ${expanded ? "" : "line-clamp-6"}`}>
+            <p className={`text-black/50 dark:text-white/50 text-sm leading-relaxed ${expanded ? "" : "line-clamp-6"}`}>
               {currentBook.description}
             </p>
             {currentBook.description.length > 300 && (
-              <button
-                onClick={() => setExpanded((e) => !e)}
-                className="text-amber-600 dark:text-amber-400 text-xs mt-2 hover:opacity-70 transition-opacity font-medium"
-              >
-                {expanded ? "Show less ↑" : "Read more ↓"}
-              </button>
+                <div className="flex items-center gap-3 w-full mt-2">
+                    <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
+                        <button
+                            onClick={() => setExpanded((e) => !e)}
+                            className="flex items-center gap-1.5 text-xs font-medium text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70 transition-colors"
+                            aria-expanded={expanded}
+                        >
+                            {expanded ? "Show less" : "Read more"}
+                            <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+                            >
+                            <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
+                    <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
+                </div>
             )}
           </div>
 
-          {/* Subjects */}
           {currentBook.subjects && currentBook.subjects.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {currentBook.subjects.slice(0, 6).map((s) => (
-                <span
-                  key={s}
-                  className="px-2 py-0.5 rounded text-xs bg-[#f0ece4] dark:bg-[#1a1916] text-[#9ca3af] dark:text-[#6b7280]"
-                >
+                <span key={s} className="px-2 py-0.5 rounded text-xs bg-black/5 dark:bg-white/5 text-black/30 dark:text-white/30">
                   {s}
                 </span>
               ))}
             </div>
           )}
 
-          {/* Meta */}
-          <div className="flex items-center gap-5 text-[#9ca3af] text-xs">
+          <div className="flex items-center gap-5 text-black/30 dark:text-white/30 text-xs">
             {currentBook.pageCount && (
-              <span className="flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" />
+              <span className="flex items-center gap-1">
+                <BookOpen className="w-4 h-4" />
                 {currentBook.pageCount.toLocaleString()} pages
               </span>
             )}
             {currentBook.publishedDate && (
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5" />
+              <span className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
                 {currentBook.publishedDate.slice(0, 4)}
               </span>
             )}

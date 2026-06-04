@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import SwipeStack from "@/components/SwipeStack";
 import { Book } from "@/lib/books";
-import { BookOpen, Settings, Moon, Sun } from "lucide-react";
-import { useTheme } from "@/lib/theme";
 
 const CACHE_KEY = "verso_feed";
 const CACHE_TTL = 45 * 60 * 1000;
@@ -59,14 +57,64 @@ const BATCH = 30;
 let sessionInitialized = false;
 let cachedStack: Book[] = [];
 
+function SkeletonLoader() {
+  return (
+    <div className="flex flex-col lg:flex-row items-start justify-center gap-16 w-full max-w-5xl mx-auto animate-pulse">
+
+      {/* Left col: card + buttons */}
+      <div className="flex flex-col items-center gap-4 flex-shrink-0">
+        <div className="w-[240px] h-[360px] rounded-2xl bg-stone-200 dark:bg-stone-800" />
+        <div className="flex gap-3 w-[240px]">
+          <div className="flex-1 h-[52px] rounded-full bg-stone-200 dark:bg-stone-800" />
+          <div className="flex-1 h-[52px] rounded-full bg-stone-200 dark:bg-stone-800" />
+        </div>
+        <div className="h-3 w-16 rounded-full bg-stone-200 dark:bg-stone-800" />
+      </div>
+
+      {/* Right col: details */}
+      <div className="flex-1 min-w-0 pt-1 flex flex-col gap-4">
+        {/* Title block */}
+        <div className="flex flex-col gap-2">
+          <div className="h-8 w-3/4 rounded-full bg-stone-200 dark:bg-stone-800" />
+          <div className="h-8 w-1/2 rounded-full bg-stone-200 dark:bg-stone-800" />
+          <div className="h-4 w-1/3 rounded-full bg-stone-200 dark:bg-stone-800 mt-1" />
+        </div>
+        {/* Stars */}
+        <div className="flex gap-1">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="w-3.5 h-3.5 rounded-sm bg-stone-200 dark:bg-stone-800" />
+          ))}
+        </div>
+        {/* Genre pills */}
+        <div className="flex gap-1.5">
+          {[80, 64, 96, 72].map((w, i) => (
+            <div key={i} className="h-6 rounded-full bg-stone-200 dark:bg-stone-800" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Divider */}
+        <div className="h-px bg-stone-200 dark:bg-stone-800" />
+        {/* Description lines */}
+        <div className="flex flex-col gap-2">
+          {["100%", "100%", "100%", "100%", "100%", "60%"].map((w, i) => (
+            <div key={i} className="h-3 rounded-full bg-stone-200 dark:bg-stone-800" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Page count + year */}
+        <div className="flex gap-5">
+          <div className="h-3 w-20 rounded-full bg-stone-200 dark:bg-stone-800" />
+          <div className="h-3 w-12 rounded-full bg-stone-200 dark:bg-stone-800" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMsg, setLoadingMsg] = useState("Finding books for you...");
   const fetching = useRef(false);
-  const { theme, toggle } = useTheme();
 
   useEffect(() => {
     if (isLoaded && !user) router.push("/sign-in");
@@ -115,83 +163,44 @@ export default function Home() {
     } finally {
       fetching.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-    const loadBooks = useCallback(async (fromEmpty: boolean) => {
+  const loadBooks = useCallback(async (fromEmpty: boolean) => {
     const shelfIds = await getShelfIds();
-
     const cached = getCache();
     if (cached.length >= BATCH) {
-        const batch = popCache(BATCH).filter((b) => !shelfIds.has(b.id));
-        cachedStack = batch;
-        setBooks(batch);
-        setLoading(false);
-        if (cacheSize() < 10) fetchFeed();
-        return;
+      const batch = popCache(BATCH).filter((b) => !shelfIds.has(b.id));
+      cachedStack = batch;
+      setBooks(batch);
+      setLoading(false);
+      if (cacheSize() < 10) fetchFeed();
+      return;
     }
-
-    if (!fromEmpty) setLoadingMsg("Building your feed...");
     setLoading(true);
-
     const fresh = await fetchFeed();
     if (fresh.length > 0) {
-        const batch = popCache(BATCH);
-        const finalBatch = (batch.length > 0 ? batch : fresh.slice(0, BATCH))
+      const batch = popCache(BATCH);
+      const finalBatch = (batch.length > 0 ? batch : fresh.slice(0, BATCH))
         .filter((b) => !shelfIds.has(b.id));
-        cachedStack = finalBatch;
-        setBooks(finalBatch);
+      cachedStack = finalBatch;
+      setBooks(finalBatch);
     } else {
-        setBooks([]);
+      setBooks([]);
     }
     setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] dark:bg-[#0f0e0c] text-[#1a1a2e] dark:text-[#f0ece4] flex flex-col">
-      <nav className="flex items-center justify-between px-8 py-4 bg-white dark:bg-[#1a1916] border-b border-[#e8e4dc] dark:border-[#2a2825] sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#1a1a2e] dark:bg-[#f0ece4] flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-white dark:text-[#1a1a2e]" />
-          </div>
-          <span className="font-bold text-lg tracking-tight">verso</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => router.push("/shelf")}
-            className="text-sm font-medium text-[#6b7280] dark:text-[#9ca3af] hover:text-[#1a1a2e] dark:hover:text-[#f0ece4] transition-colors px-3 py-1.5 rounded-lg hover:bg-[#f0ece4] dark:hover:bg-[#2a2825]"
-          >
-            My Shelf
-          </button>
-          <button
-            onClick={toggle}
-            className="p-2 rounded-lg text-[#6b7280] dark:text-[#9ca3af] hover:text-[#1a1a2e] dark:hover:text-[#f0ece4] hover:bg-[#f0ece4] dark:hover:bg-[#2a2825] transition-all"
-          >
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-          <button
-            onClick={() => router.push("/preferences")}
-            className="p-2 rounded-lg text-[#6b7280] dark:text-[#9ca3af] hover:text-[#1a1a2e] dark:hover:text-[#f0ece4] hover:bg-[#f0ece4] dark:hover:bg-[#2a2825] transition-all"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          <UserButton />
-        </div>
-      </nav>
-
+    <div className="min-h-screen flex flex-col bg-stone-100 dark:bg-stone-950 text-black dark:text-stone-100">
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
         {loading ? (
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-4 border-[#e8e4dc] dark:border-[#2a2825] border-t-[#1a1a2e] dark:border-t-[#f0ece4] animate-spin" />
-            <p className="text-[#9ca3af] text-sm">{loadingMsg}</p>
-          </div>
+          <SkeletonLoader />
         ) : books.length === 0 ? (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-[#9ca3af]">No books found.</p>
+            <p className="text-stone-400">No books found.</p>
             <button
               onClick={() => loadBooks(true)}
-              className="text-sm text-[#1a1a2e] dark:text-[#f0ece4] hover:opacity-60 transition-opacity font-medium"
+              className="text-sm text-stone-900 dark:text-stone-100 hover:opacity-60 transition-opacity"
             >
               Try again →
             </button>

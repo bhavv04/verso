@@ -44,7 +44,7 @@ Verso is a full stack web app that lets you discover books through a swipe-based
 ### Installation
 
 ```bash
-git clone https://github.com/yourusername/verso.git
+git clone https://github.com/bhavv04/verso.git
 cd verso
 npm install
 ```

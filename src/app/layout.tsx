@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/lib/theme";
+import Navbar from "@/components/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,8 +13,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className="bg-[#faf8f5] dark:bg-[#0f0e0c] text-[#1a1a2e] dark:text-[#f0ece4] transition-colors duration-200">
-          <ThemeProvider>{children}</ThemeProvider>
+        <body className="bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors duration-200">
+          <ThemeProvider>
+            <div className="h-screen flex flex-col">
+                <Navbar />
+                {children}
+            </div>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

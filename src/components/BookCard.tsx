@@ -18,7 +18,7 @@ export default function BookCard({ book, onSwipe, isTop }: BookCardProps) {
 
   return (
     <motion.div
-      className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg cursor-grab active:cursor-grabbing"
+      className="absolute inset-0 mx-auto w-full max-w-sm rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing"
       style={{ x, rotate }}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
@@ -38,27 +38,27 @@ export default function BookCard({ book, onSwipe, isTop }: BookCardProps) {
           className="w-full h-full object-cover"
         />
       ) : (
-        <div className="w-full h-full bg-[#f0ece4] flex items-center justify-center">
-          <BookOpen className="w-16 h-16 text-[#c8c0b0]" />
+        <div className="w-full h-full bg-stone-100 flex items-center justify-center">
+          <BookOpen className="w-16 h-16 text-stone-300" />
         </div>
       )}
 
       <motion.div
-        className="absolute inset-0 bg-emerald-400/20 flex items-center justify-center rounded-2xl"
+        className="absolute inset-0 bg-emerald-400/20 flex items-start justify-start p-6 rounded-2xl"
         style={{ opacity: rightOpacity }}
       >
-        <div className="border-4 border-emerald-500 rounded-xl px-6 py-3 -rotate-12 bg-white/90">
-          <span className="text-emerald-600 text-3xl font-black tracking-wider">SAVE</span>
-        </div>
+        <span className="text-emerald-600 text-2xl font-black tracking-wide -rotate-12">
+          SAVE
+        </span>
       </motion.div>
 
       <motion.div
-        className="absolute inset-0 bg-red-400/20 flex items-center justify-center rounded-2xl"
+        className="absolute inset-0 bg-red-400/20 flex items-start justify-end p-6 rounded-2xl"
         style={{ opacity: leftOpacity }}
       >
-        <div className="border-4 border-red-500 rounded-xl px-6 py-3 rotate-12 bg-white/90">
-          <span className="text-red-600 text-3xl font-black tracking-wider">PASS</span>
-        </div>
+        <span className="text-red-500 text-2xl font-black tracking-wide rotate-12">
+          PASS
+        </span>
       </motion.div>
     </motion.div>
   );

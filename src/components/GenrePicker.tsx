@@ -30,8 +30,8 @@ export default function GenrePicker({ selected, onChange }: GenrePickerProps) {
             onClick={() => toggle(genre)}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
               active
-                ? "bg-[#1a1a2e] dark:bg-[#f0ece4] text-white dark:text-[#1a1a2e] border-[#1a1a2e] dark:border-[#f0ece4]"
-                : "bg-white dark:bg-[#1a1916] text-[#6b7280] dark:text-[#9ca3af] border-[#e8e4dc] dark:border-[#2a2825] hover:border-[#1a1a2e]/30 dark:hover:border-[#f0ece4]/30 hover:text-[#1a1a2e] dark:hover:text-[#f0ece4]"
+                ? "bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 border-stone-900 dark:border-stone-100"
+                : "bg-white dark:bg-stone-900 text-stone-400 dark:text-stone-500 border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 hover:text-stone-900 dark:hover:text-stone-100"
             }`}
           >
             {genre}
