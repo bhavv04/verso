@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, ArrowLeft, Trash2, Star } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 
 interface ShelfBook {
   id: string;
@@ -19,6 +21,7 @@ export default function ShelfPage() {
   const [books, setBooks] = useState<ShelfBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
+  const { theme, toggle } = useTheme();
 
   useEffect(() => {
     fetch("/api/shelf")
@@ -39,18 +42,24 @@ export default function ShelfPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-[#1a1a2e]">
-      <nav className="flex items-center gap-4 px-8 py-4 bg-white border-b border-[#e8e4dc] sticky top-0 z-10 shadow-sm">
-        <button onClick={() => router.push("/")} className="text-[#6b7280] hover:text-[#1a1a2e] transition-colors">
+    <div className="min-h-screen bg-[#faf8f5] dark:bg-[#0f0e0c] text-[#1a1a2e] dark:text-[#f0ece4]">
+      <nav className="flex items-center gap-4 px-8 py-4 bg-white dark:bg-[#1a1916] border-b border-[#e8e4dc] dark:border-[#2a2825] sticky top-0 z-10 shadow-sm">
+        <button onClick={() => router.push("/")} className="text-[#6b7280] dark:text-[#f0ece4] hover:text-[#1a1a2e] dark:hover:text-[#9ca3af] transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#1a1a2e] flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-[#1a1a2e] dark:bg-[#f0ece4] flex items-center justify-center">
+            <BookOpen className="w-4 h-4 text-white dark:text-[#1a1a2e]" />
           </div>
           <span className="font-bold text-lg tracking-tight">my shelf</span>
         </div>
         <span className="text-[#9ca3af] text-sm ml-auto">{books.length} books</span>
+        <button
+            onClick={toggle}
+            className="p-2 rounded-lg text-[#6b7280] dark:text-[#9ca3af] hover:text-[#1a1a2e] dark:hover:text-[#f0ece4] hover:bg-[#f0ece4] dark:hover:bg-[#2a2825] transition-all"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </nav>
 
       <main className="px-8 py-8 max-w-5xl mx-auto">
@@ -76,29 +85,29 @@ export default function ShelfPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {books.map((book) => (
               <div key={book.id} className="flex flex-col gap-2 group">
-                <div className="aspect-[2/3] rounded-xl overflow-hidden bg-[#f0ece4] relative shadow-sm border border-[#e8e4dc]">
+                <div className="aspect-[2/3] rounded-xl overflow-hidden bg-[#f0ece4] dark:bg-[#1a1916] relative shadow-sm">
                   {book.coverUrl ? (
                     <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <BookOpen className="w-8 h-8 text-[#c8c0b0]" />
+                      <BookOpen className="w-8 h-8 text-[#c8c0b0] dark:text-[#9ca3af]" />
                     </div>
                   )}
                   <button
                     onClick={() => handleRemove(book.googleBooksId)}
                     disabled={removing === book.googleBooksId}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 border border-[#e8e4dc]"
+                    className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 border border-[#e8e4dc] dark:border-[#2a2825]"
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-[#6b7280] hover:text-red-500" />
+                    <Trash2 className="w-3.5 h-3.5 text-[#6b7280] dark:text-[#9ca3af] hover:text-red-500" />
                   </button>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#1a1a2e] leading-tight line-clamp-2">{book.title}</p>
-                  <p className="text-xs text-amber-600 mt-0.5">{book.author}</p>
+                  <p className="text-sm font-semibold text-[#1a1a2e] dark:text-[#f0ece4] leading-tight line-clamp-2">{book.title}</p>
+                  <p className="text-xs text- mt-0.5">{book.author}</p>
                   {book.rating && (
                     <div className="flex items-center gap-1 mt-1">
-                      <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                      <span className="text-xs text-[#9ca3af]">{book.rating.toFixed(1)}</span>
+                      <Star className="w-3 h-3" />
+                      <span className="text-xs text-[#6b7280] dark:text-[#9ca3af]">{book.rating.toFixed(1)}</span>
                     </div>
                   )}
                 </div>

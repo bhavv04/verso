@@ -18,7 +18,7 @@ export default function BookCard({ book, onSwipe, isTop }: BookCardProps) {
 
   return (
     <motion.div
-      className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg cursor-grab active:cursor-grabbing border border-[#e8e4dc]"
+      className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg cursor-grab active:cursor-grabbing"
       style={{ x, rotate }}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
@@ -28,7 +28,7 @@ export default function BookCard({ book, onSwipe, isTop }: BookCardProps) {
         else if (info.offset.x < -120) onSwipe("LEFT");
       }}
       whileDrag={{ scale: 1.02 }}
-      animate={{ scale: isTop ? 1 : 0.95, y: isTop ? 0 : 14 }}
+      animate={{ scale: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       {book.coverUrl ? (

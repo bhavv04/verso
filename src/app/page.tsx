@@ -5,10 +5,11 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import SwipeStack from "@/components/SwipeStack";
 import { Book } from "@/lib/books";
-import { BookOpen, Settings } from "lucide-react";
+import { BookOpen, Settings, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 
 const CACHE_KEY = "verso_feed";
-const CACHE_TTL = 45 * 60 * 1000; // 45 min
+const CACHE_TTL = 45 * 60 * 1000;
 
 function getCache(): Book[] {
   try {
@@ -43,11 +44,20 @@ function cacheSize(): number {
   } catch { return 0; }
 }
 
+async function getShelfIds(): Promise<Set<string>> {
+  try {
+    const res = await fetch("/api/shelf");
+    const data = await res.json();
+    return new Set((data.books ?? []).map((b: any) => b.googleBooksId));
+  } catch {
+    return new Set();
+  }
+}
+
 const BATCH = 30;
 
-// Module-level flag — persists across navigations
 let sessionInitialized = false;
-let cachedStack: Book[] = []; // persists across navigations
+let cachedStack: Book[] = [];
 
 export default function Home() {
   const { user, isLoaded } = useUser();
@@ -56,32 +66,30 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState("Finding books for you...");
   const fetching = useRef(false);
+  const { theme, toggle } = useTheme();
 
   useEffect(() => {
     if (isLoaded && !user) router.push("/sign-in");
   }, [isLoaded, user]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (user) {
-        fetch("/api/user", { method: "POST" })
+      fetch("/api/user", { method: "POST" })
         .then((r) => r.json())
         .then((data) => {
-            if (sessionInitialized && cachedStack.length > 0) {
-            // Just restore exactly where we left off
+          if (sessionInitialized && cachedStack.length > 0) {
             setBooks(cachedStack);
             setLoading(false);
             return;
-            }
-
-            if (sessionInitialized) return;
-            sessionInitialized = true;
-
-            const userGenres = data.user?.genres ?? [];
-            if (userGenres.length === 0) router.push("/onboarding");
-            else loadBooks(false);
+          }
+          if (sessionInitialized) return;
+          sessionInitialized = true;
+          const userGenres = data.user?.genres ?? [];
+          if (userGenres.length === 0) router.push("/onboarding");
+          else loadBooks(false);
         });
     }
-    }, [user]);
+  }, [user]);
 
   const fetchFeed = useCallback(async (attempt = 0): Promise<Book[]> => {
     if (fetching.current) return [];
@@ -90,14 +98,11 @@ export default function Home() {
       const res = await fetch("/api/feed");
       const data = await res.json();
       const books: Book[] = data.books ?? [];
-
       if (books.length === 0 && attempt < 3) {
-        // Retry after a short delay
         fetching.current = false;
         await new Promise((r) => setTimeout(r, 1500));
         return fetchFeed(attempt + 1);
       }
-
       setCache(books);
       return books;
     } catch {
@@ -114,52 +119,60 @@ export default function Home() {
   }, []);
 
     const loadBooks = useCallback(async (fromEmpty: boolean) => {
-        const cached = getCache();
+    const shelfIds = await getShelfIds();
 
-        if (cached.length >= BATCH) {
-            const batch = popCache(BATCH);
-            cachedStack = batch; // ← sync
-            setBooks(batch);
-            setLoading(false);
-            if (cacheSize() < 10) fetchFeed();
-            return;
-        }
-
-        if (!fromEmpty) setLoadingMsg("Building your feed...");
-        setLoading(true);
-
-        const fresh = await fetchFeed();
-        if (fresh.length > 0) {
-            const batch = popCache(BATCH);
-            const finalBatch = batch.length > 0 ? batch : fresh.slice(0, BATCH);
-            cachedStack = finalBatch; // ← sync
-            setBooks(finalBatch);
-        } else {
-            setBooks([]);
-        }
+    const cached = getCache();
+    if (cached.length >= BATCH) {
+        const batch = popCache(BATCH).filter((b) => !shelfIds.has(b.id));
+        cachedStack = batch;
+        setBooks(batch);
         setLoading(false);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        if (cacheSize() < 10) fetchFeed();
+        return;
+    }
+
+    if (!fromEmpty) setLoadingMsg("Building your feed...");
+    setLoading(true);
+
+    const fresh = await fetchFeed();
+    if (fresh.length > 0) {
+        const batch = popCache(BATCH);
+        const finalBatch = (batch.length > 0 ? batch : fresh.slice(0, BATCH))
+        .filter((b) => !shelfIds.has(b.id));
+        cachedStack = finalBatch;
+        setBooks(finalBatch);
+    } else {
+        setBooks([]);
+    }
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-[#1a1a2e] flex flex-col">
-      <nav className="flex items-center justify-between px-8 py-4 bg-white border-b border-[#e8e4dc] sticky top-0 z-10 shadow-sm">
+    <div className="min-h-screen bg-[#faf8f5] dark:bg-[#0f0e0c] text-[#1a1a2e] dark:text-[#f0ece4] flex flex-col">
+      <nav className="flex items-center justify-between px-8 py-4 bg-white dark:bg-[#1a1916] border-b border-[#e8e4dc] dark:border-[#2a2825] sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#1a1a2e] flex items-center justify-center shadow-sm">
-            <BookOpen className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl bg-[#1a1a2e] dark:bg-[#f0ece4] flex items-center justify-center">
+            <BookOpen className="w-4 h-4 text-white dark:text-[#1a1a2e]" />
           </div>
-          <span className="font-bold text-xl tracking-tight text-[#1a1a2e]">verso</span>
+          <span className="font-bold text-lg tracking-tight">verso</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => router.push("/shelf")}
-            className="text-sm font-medium text-[#6b7280] hover:text-[#1a1a2e] transition-colors px-3 py-1.5 rounded-lg hover:bg-[#f0ece4]"
+            className="text-sm font-medium text-[#6b7280] dark:text-[#9ca3af] hover:text-[#1a1a2e] dark:hover:text-[#f0ece4] transition-colors px-3 py-1.5 rounded-lg hover:bg-[#f0ece4] dark:hover:bg-[#2a2825]"
           >
             My Shelf
           </button>
           <button
+            onClick={toggle}
+            className="p-2 rounded-lg text-[#6b7280] dark:text-[#9ca3af] hover:text-[#1a1a2e] dark:hover:text-[#f0ece4] hover:bg-[#f0ece4] dark:hover:bg-[#2a2825] transition-all"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button
             onClick={() => router.push("/preferences")}
-            className="p-2 rounded-lg text-[#6b7280] hover:text-[#1a1a2e] hover:bg-[#f0ece4] transition-all"
+            className="p-2 rounded-lg text-[#6b7280] dark:text-[#9ca3af] hover:text-[#1a1a2e] dark:hover:text-[#f0ece4] hover:bg-[#f0ece4] dark:hover:bg-[#2a2825] transition-all"
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -170,25 +183,25 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
         {loading ? (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 rounded-full border-4 border-[#e8e4dc] border-t-[#1a1a2e] animate-spin" />
-            <p className="text-[#6b7280] text-sm">{loadingMsg}</p>
+            <div className="w-8 h-8 rounded-full border-4 border-[#e8e4dc] dark:border-[#2a2825] border-t-[#1a1a2e] dark:border-t-[#f0ece4] animate-spin" />
+            <p className="text-[#9ca3af] text-sm">{loadingMsg}</p>
           </div>
         ) : books.length === 0 ? (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-[#6b7280]">No books found.</p>
+            <p className="text-[#9ca3af]">No books found.</p>
             <button
               onClick={() => loadBooks(true)}
-              className="text-sm text-[#1a1a2e] hover:text-[#6b7280] font-medium"
+              className="text-sm text-[#1a1a2e] dark:text-[#f0ece4] hover:opacity-60 transition-opacity font-medium"
             >
               Try again →
             </button>
           </div>
         ) : (
           <SwipeStack
-                books={books}
-                onEmpty={() => loadBooks(true)}
-                onStackChange={(stack) => { cachedStack = stack; }}
-            />
+            books={books}
+            onEmpty={() => loadBooks(true)}
+            onStackChange={(stack) => { cachedStack = stack; }}
+          />
         )}
       </main>
     </div>
