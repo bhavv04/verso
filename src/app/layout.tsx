@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   title: "Verso",
   description: "Find your next favourite book",
     icons: {
-    icon: '/favicon.png',
   },
 };
 
