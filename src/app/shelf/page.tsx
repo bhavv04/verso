@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, Trash2, Star } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ShelfBook {
   id: string;
@@ -11,6 +12,7 @@ interface ShelfBook {
   title: string;
   author: string;
   coverUrl: string;
+  description: string;
   rating: number | null;
   genres: string[];
 }
@@ -20,6 +22,7 @@ export default function ShelfPage() {
   const [books, setBooks] = useState<ShelfBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [selectedBook, setSelectedBook] = useState<ShelfBook | null>(null);
 
   useEffect(() => {
     fetch("/api/shelf")
@@ -73,7 +76,11 @@ export default function ShelfPage() {
             ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                 {books.map((book) => (
-                <div key={book.id} className="flex flex-col gap-2 group">
+                <div
+                    key={book.id}
+                    className="flex flex-col gap-2 group cursor-pointer"
+                    onClick={() => setSelectedBook(book)}
+                >
                     <div className="aspect-[2/3] rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800 relative shadow-sm">
                     {book.coverUrl ? (
                         <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
@@ -105,6 +112,95 @@ export default function ShelfPage() {
             </div>
             )}
         </main>
+
+        {/* Book Detail Modal */}
+        <AnimatePresence>
+            {selectedBook && (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+                onClick={() => setSelectedBook(null)}
+            >
+                <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white dark:bg-[#1a1916] rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 flex flex-col gap-5"
+                onClick={(e) => e.stopPropagation()}
+                >
+                {/* Header */}
+                <div className="flex gap-4">
+                    <div className="w-24 h-36 rounded-xl overflow-hidden flex-shrink-0 bg-[#f0ece4] dark:bg-[#0f0e0c]">
+                    {selectedBook.coverUrl ? (
+                        <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                        <BookOpen className="w-8 h-8 text-[#c8c0b0]" />
+                        </div>
+                    )}
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-0">
+                    <h2 className="text-xl font-bold text-[#1a1a2e] dark:text-[#f0ece4] leading-tight">{selectedBook.title}</h2>
+                    <p className="text-amber-600 dark:text-amber-400 text-sm font-medium">{selectedBook.author}</p>
+                    {selectedBook.rating && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                                key={star}
+                                className={`w-3 h-3 ${
+                                star <= Math.round(selectedBook.rating!)
+                                    ? "text-amber-400 fill-amber-400"
+                                    : "text-[#e8e4dc] dark:text-[#2a2825] fill-[#e8e4dc] dark:fill-[#2a2825]"
+                                }`}
+                            />
+                            ))}
+                        </div>
+                        <span className="text-[#9ca3af] text-xs">{selectedBook.rating.toFixed(1)}</span>
+                        </div>
+                    )}
+                    {selectedBook.genres && selectedBook.genres.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                        {selectedBook.genres.slice(0, 3).map((g) => (
+                            <span
+                            key={g}
+                            className="px-2 py-0.5 rounded-full text-xs border border-[#e8e4dc] dark:border-[#2a2825] text-[#6b7280] dark:text-[#9ca3af]"
+                            >
+                            {g}
+                            </span>
+                        ))}
+                        </div>
+                    )}
+                    </div>
+                </div>
+
+                <div className="h-px bg-[#e8e4dc] dark:bg-[#2a2825]" />
+
+                {/* Description */}
+                {selectedBook.description && (
+                    <div>
+                    <p className="text-xs font-semibold text-[#9ca3af] uppercase tracking-widest mb-2">About</p>
+                    <p className="text-[#4b5563] dark:text-[#9ca3af] text-sm leading-relaxed">{selectedBook.description}</p>
+                    </div>
+                )}
+
+                {/* Remove button */}
+                <button
+                    onClick={() => {
+                    handleRemove(selectedBook.googleBooksId);
+                    setSelectedBook(null);
+                    }}
+                    className="w-full py-2.5 rounded-xl border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                >
+                    Remove from shelf
+                </button>
+                </motion.div>
+            </motion.div>
+            )}
+        </AnimatePresence>
     </div>
   );
 }
