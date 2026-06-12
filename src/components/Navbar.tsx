@@ -10,7 +10,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
 
-  const isHome = pathname === "/";
+  const isHome = pathname === "/app";
 
   return (
     <div className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
@@ -23,7 +23,7 @@ export default function Navbar() {
         <div className="flex items-center">
           {!isHome && (
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push("/app")}
               className="group w-8 h-8 flex items-center justify-center rounded-xl
                 text-stone-400 hover:text-stone-700 dark:text-stone-500 dark:hover:text-stone-200
                 transition-colors duration-200"
@@ -33,7 +33,7 @@ export default function Navbar() {
             </button>
           )}
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/app")}
             className="group flex items-center gap-2 px-2 py-1.5 rounded-xl
               hover:bg-stone-100 dark:hover:bg-stone-800/60
               active:scale-[0.97] transition-all duration-150"
@@ -51,9 +51,9 @@ export default function Navbar() {
 
           {/* Shelf */}
           <button
-            onClick={() => router.push("/shelf")}
+            onClick={() => router.push("/app/shelf")}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all duration-150 active:scale-[0.97]
-              ${pathname === "/shelf"
+              ${pathname === "/app/shelf"
                 ? "bg-stone-100 dark:bg-stone-700/60 text-stone-900 dark:text-stone-100"
                 : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800/60"
               }`}
@@ -61,29 +61,26 @@ export default function Navbar() {
             <Library className="w-4 h-4 flex-shrink-0" />
             <span className="hidden sm:inline leading-none">Shelf</span>
           </button>
-          
+
           {/* Theme */}
-            <button
-            onClick={(e) => toggle(e)}
+          <button
+            onClick={toggle}
             className="w-8 h-8 flex items-center justify-center rounded-xl
-                text-stone-400 hover:text-stone-700 dark:text-stone-500 dark:hover:text-stone-200
-                hover:bg-stone-100 dark:hover:bg-stone-800/60
-                active:scale-[0.97] transition-all duration-150"
+              text-stone-400 hover:text-stone-700 dark:text-stone-500 dark:hover:text-stone-200
+              hover:bg-stone-100 dark:hover:bg-stone-800/60
+              active:scale-[0.97] transition-all duration-150"
             aria-label="Toggle theme"
-            >
-                <span
-                    key={theme}
-                    className="animate-theme-icon"
-                >
-                    {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </span>
-            </button>
+          >
+            <span key={theme} className="animate-theme-icon">
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </span>
+          </button>
 
           {/* Settings */}
           <button
-            onClick={() => router.push("/preferences")}
+            onClick={() => router.push("/app/preferences")}
             className={`w-8 h-8 flex items-center justify-center rounded-xl active:scale-[0.97] transition-all duration-150
-              ${pathname === "/preferences"
+              ${pathname === "/app/preferences"
                 ? "bg-stone-100 dark:bg-stone-700/60 text-stone-900 dark:text-stone-100"
                 : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800/60"
               }`}

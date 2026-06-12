@@ -67,7 +67,7 @@ export default function ShelfPage() {
                 <p className="text-stone-500 text-lg font-medium">Your shelf is empty</p>
                 <p className="text-stone-400 text-sm mt-1">Swipe right on books you like to save them here.</p>
                 <button
-                onClick={() => router.push("/")}
+                onClick={() => router.push("/app")}
                 className="mt-6 px-5 py-2.5 rounded-xl bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-sm font-medium hover:opacity-80 transition-opacity"
                 >
                 Start swiping →
