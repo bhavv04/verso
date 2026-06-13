@@ -1,16 +1,16 @@
-# Verso
+# Incipit
 
 > Tinder for books. Swipe through titles, build your shelf, discover what to read next.
 
-![Homepage Screenshot](public/verso1.png)
+![Homepage Screenshot](public/incipit_shelf.png)
 
 books that were swiped right get saved to your shelf: 
 
-![Shelf Preview](public/verso2.png)
+![Shelf Preview](public/incipit_shelf.png)
 
 ## Overview
 
-Verso is a full stack web app that lets you discover books through a swipe-based interface. Pick your genres, swipe right on books you want to read, and build a personal shelf over time. Built with a modern TypeScript stack and deployed on Vercel.
+Incipit is a full stack web app that lets you discover books through a swipe-based interface. Pick your genres, swipe right on books you want to read, and build a personal shelf over time. Built with a modern TypeScript stack and deployed on Vercel.
 
 ## Features
 
@@ -44,8 +44,8 @@ Verso is a full stack web app that lets you discover books through a swipe-based
 ### Installation
 
 ```bash
-git clone https://github.com/bhavv04/verso.git
-cd verso
+git clone https://github.com/bhavv04/incipit.git
+cd incipit
 npm install
 ```
 

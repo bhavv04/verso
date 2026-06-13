@@ -22,7 +22,7 @@ export default function Navbar() {
             <BookOpen className="w-4 h-4 text-white dark:text-stone-900" />
           </div>
           <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-stone-100" style={{ fontFamily: "var(--font-playfair)" }}>
-            verso
+            Incipit
           </span>
         </Link>
 

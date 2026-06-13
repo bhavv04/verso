@@ -13,7 +13,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    const stored = localStorage.getItem("verso_theme") as Theme | null;
+    const stored = localStorage.getItem("incipit_theme") as Theme | null;
     if (stored) setTheme(stored);
   }, []);
 
@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Fallback for browsers that don't support View Transitions
     if (!document.startViewTransition) {
       setTheme(next);
-      localStorage.setItem("verso_theme", next);
+      localStorage.setItem("incipit_theme", next);
       return;
     }
 
@@ -39,7 +39,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const transition = document.startViewTransition(() => {
       setTheme(next);
-      localStorage.setItem("verso_theme", next);
+      localStorage.setItem("incipit_theme", next);
     });
 
     transition.ready.then(() => {

@@ -11,17 +11,17 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen bg-stone-50 dark:bg-stone-950 overflow-hidden transition-colors duration-200">
-      <div className="max-w-6xl mx-auto px-6 pt-28 lg:pt-36 pb-16">
+      <div className="max-w-6xl space-y-4 mx-auto px-6 pt-28 lg:pt-36 pb-16">
 
         {/* Eyebrow */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="flex items-center gap-2 w-fit px-3 py-1.5 rounded-full bg-white dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/40 mb-10"
+          className="flex items-center gap-2 w-fit px-3 py-1.5 rounded-full bg-white dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/40"
         >
           <BookOpen className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-          <span className="text-xs font-medium text-gray-500 dark:text-stone-400 tracking-wide">Book discovery, reimagined</span>
+          <span className="text-xs text-gray-500 dark:text-stone-400 tracking-wide">Book discovery, reimagined</span>
         </motion.div>
 
         {/* Headline + overlapping demo */}
@@ -49,9 +49,9 @@ export default function Hero() {
             <div className="relative">
 
               {/* Decorative stacked cards */}
-              <div className="absolute inset-0 rounded-2xl bg-stone-300 dark:bg-stone-900 border border-stone-200 dark:border-stone-700/40 rotate-[8deg] z-0" />
-              <div className="absolute inset-0 rounded-2xl bg-stone-200 dark:bg-stone-900 border border-stone-200 dark:border-stone-700/40 rotate-[-2deg] z-0 shadow-sm" />
-              <div className="absolute inset-0 rounded-2xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700/40 rotate-[-12deg] z-0 shadow-sm" />
+              <div className="absolute inset-0 rounded-2xl bg-stone-300 dark:bg-stone-900 rotate-[8deg] z-0 shadow-sm" />
+              <div className="absolute inset-0 rounded-2xl bg-stone-200 dark:bg-stone-900 rotate-[-2deg] z-0 shadow-sm" />
+              <div className="absolute inset-0 rounded-2xl bg-stone-100 dark:bg-stone-800 rotate-[-12deg] z-0 shadow-sm" />
 
               {/* "Try it" hint */}
               <div className="relative z-10 flex items-center gap-1.5 mb-3 px-3 py-1.5 rounded-full bg-slate-900 dark:bg-stone-100 w-fit mx-auto lg:mx-0">

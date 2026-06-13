@@ -45,11 +45,11 @@ export default function SwipeStack({ books, onEmpty, onStackChange }: SwipeStack
 
     if (direction === "RIGHT") {
       try {
-        const raw = localStorage.getItem("verso_feed");
+        const raw = localStorage.getItem("incipit_feed");
         if (raw) {
           const parsed = JSON.parse(raw);
           parsed.books = parsed.books.filter((b: any) => b.id !== book.id);
-          localStorage.setItem("verso_feed", JSON.stringify(parsed));
+          localStorage.setItem("incipit_feed", JSON.stringify(parsed));
         }
       } catch {}
     }
@@ -76,11 +76,11 @@ export default function SwipeStack({ books, onEmpty, onStackChange }: SwipeStack
     // If it was a right swipe, put it back in the local cache too
     if (direction === "RIGHT") {
       try {
-        const raw = localStorage.getItem("verso_feed");
+        const raw = localStorage.getItem("incipit_feed");
         if (raw) {
           const parsed = JSON.parse(raw);
           parsed.books = [...parsed.books, book];
-          localStorage.setItem("verso_feed", JSON.stringify(parsed));
+          localStorage.setItem("incipit_feed", JSON.stringify(parsed));
         }
       } catch {}
     }
