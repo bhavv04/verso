@@ -1,6 +1,6 @@
 import { Book } from "./books";
 
-const CACHE_KEY = "incipit_book_cache";
+const CACHE_KEY = "verrere_book_cache";
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 interface BookCache {

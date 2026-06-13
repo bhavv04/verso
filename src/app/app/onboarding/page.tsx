@@ -40,7 +40,7 @@ export default function OnboardingPage() {
             <BookOpen className="w-5 h-5 text-stone-100 dark:text-stone-900" />
           </div>
           <span className="font-semibold text-xl text-stone-900 dark:text-stone-100" style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.025em" }}>
-            incipit
+            verrere
           </span>
         </div>
 

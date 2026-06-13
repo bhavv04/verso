@@ -29,7 +29,7 @@ export default function PreferencesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ genres }),
     });
-    localStorage.removeItem("incipit_feed"); // ← bust the cache when changing genres
+    localStorage.removeItem("verrere_feed"); // ← bust the cache when changing genres
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

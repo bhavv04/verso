@@ -6,7 +6,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
-  title: "Incipit",
+  title: "verrere",
   description: "Find your next favourite book",
     icons: {
   },

@@ -7,7 +7,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { Book } from "@/lib/books";
 import Navbar from "@/components/Navbar";
 
-const CACHE_KEY = "incipit_feed";
+const CACHE_KEY = "verrere_feed";
 const CACHE_TTL = 45 * 60 * 1000;
 
 function getCache(): Book[] {

@@ -1,16 +1,16 @@
-# Incipit
+# verrere
 
 > Tinder for books. Swipe through titles, build your shelf, discover what to read next.
 
-![Homepage Screenshot](public/incipit_shelf.png)
+![Homepage Screenshot](public/verrere_shelf.png)
 
 books that were swiped right get saved to your shelf: 
 
-![Shelf Preview](public/incipit_shelf.png)
+![Shelf Preview](public/verrere_shelf.png)
 
 ## Overview
 
-Incipit is a full stack web app that lets you discover books through a swipe-based interface. Pick your genres, swipe right on books you want to read, and build a personal shelf over time. Built with a modern TypeScript stack and deployed on Vercel.
+verrere is a full stack web app that lets you discover books through a swipe-based interface. Pick your genres, swipe right on books you want to read, and build a personal shelf over time. Built with a modern TypeScript stack and deployed on Vercel.
 
 ## Features
 
@@ -44,8 +44,8 @@ Incipit is a full stack web app that lets you discover books through a swipe-bas
 ### Installation
 
 ```bash
-git clone https://github.com/bhavv04/incipit.git
-cd incipit
+git clone https://github.com/bhavv04/verrere.git
+cd verrere
 npm install
 ```
 

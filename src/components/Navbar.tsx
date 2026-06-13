@@ -42,7 +42,7 @@ export default function Navbar() {
             <div className="w-6 h-6 rounded-md bg-stone-900 dark:bg-stone-100/90 flex items-center justify-center flex-shrink-0">
               <BookOpen className="w-3.5 h-3.5 text-stone-100 dark:text-stone-900" />
             </div>
-            <span className="text-stone-900 dark:text-stone-100">Incipit</span>
+            <span className="text-stone-900 dark:text-stone-100">verrere</span>
           </button>
         </div>
 
