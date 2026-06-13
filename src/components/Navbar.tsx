@@ -1,101 +1,88 @@
 "use client";
 
-import { BookOpen, Sun, Moon, Settings, ArrowLeft, Library } from "lucide-react";
+import { ArrowLeft, Library, Compass, Settings, Sun, Moon } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { useTheme } from "@/lib/theme";
 
+const NAV = [
+  { label: "Discover", icon: Compass, href: "/app" },
+  { label: "Shelf",    icon: Library, href: "/app/shelf" },
+  { label: "Settings", icon: Settings, href: "/app/preferences" },
+];
+
+function Dot({ show }: { show: boolean }) {
+  return show ? <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-400" /> : null;
+}
+
 export default function Navbar() {
-  const router = useRouter();
+  const router   = useRouter();
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
 
-  const isHome = pathname === "/app";
+  const active = (href: string) => pathname === href;
+  const go     = (href: string) => () => router.push(href);
+
+  const iconCls = (href: string) =>
+    `relative p-1.5 transition-colors ${active(href) ? "text-stone-900 dark:text-stone-100" : "text-stone-400 dark:text-stone-500"}`;
+
+  const labelCls = (href: string) =>
+    `text-[10px] font-medium tracking-wide ${active(href) ? "text-stone-900 dark:text-stone-100" : "text-stone-400 dark:text-stone-500"}`;
 
   return (
-    <div className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-      <nav className="pointer-events-auto flex items-center justify-between w-full max-w-xl px-2 py-2 rounded-2xl
-        bg-white/80 dark:bg-stone-900/75
-        border border-stone-200/80 dark:border-stone-700/40
-        backdrop-blur-xl">
+    <>
+      {/* Top bar */}
+      <div className="fixed top-4 inset-x-0 z-50 flex justify-center px-4">
+        <nav className="flex items-center justify-between w-full max-w-3xl px-3 py-2.5 rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-white/75 dark:bg-[#0e0e0e]/80 backdrop-blur-2xl shadow-[0_2px_16px_rgb(0,0,0,0.06)] dark:shadow-[0_2px_24px_rgb(0,0,0,0.4)]">
 
-        {/* Left */}
-        <div className="flex items-center">
-          {!isHome && (
-            <button
-              onClick={() => router.push("/app")}
-              className="group w-8 h-8 flex items-center justify-center rounded-xl
-                text-stone-400 hover:text-stone-700 dark:text-stone-500 dark:hover:text-stone-200
-                transition-colors duration-200"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-200" />
+          {/* Left */}
+          <div className="flex items-center gap-2">
+            {!active("/app") && (
+              <button onClick={() => router.back()} aria-label="Go back" className="w-8 h-8 flex items-center justify-center rounded-xl text-stone-500 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            )}
+            <button onClick={go("/app")} className="flex items-center gap-2.5 group">
+              <div className="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-black/[0.06] dark:ring-white/[0.08] group-hover:ring-amber-400/40 transition-all">
+                <img src="/verrere.png" alt="Verso" className="w-full h-full object-contain" />
+              </div>
+              <span className="hidden sm:block text-[15px] font-semibold tracking-[-0.02em] text-stone-900 dark:text-stone-100">verso</span>
             </button>
-          )}
-          <button
-            onClick={() => router.push("/app")}
-            className="group flex items-center gap-2 px-2 py-1.5 rounded-xl
-              hover:bg-stone-100 dark:hover:bg-stone-800/60
-              active:scale-[0.97] transition-all duration-150"
-            aria-label="Go to homepage"
-          >
-            <div className="w-8 h-8  flex items-center justify-center flex-shrink-0">
-              <img src="/verrere.png" alt="verrere" className="w-full h-full object-contain" />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-stone-100">verrere</span>
+          </div>
+
+          {/* Center — desktop only */}
+          <div className="hidden md:flex items-center gap-0.5">
+            {NAV.slice(0, 2).map(({ label, href }) => (
+              <button key={href} onClick={go(href)} className={`relative px-4 py-2 rounded-xl text-[13px] font-medium transition-colors ${active(href) ? "text-stone-900 dark:text-stone-100" : "text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"}`}>
+                {label}
+                {active(href) && <span className="absolute bottom-1 left-4 right-4 h-[2px] rounded-full bg-amber-400/80" />}
+              </button>
+            ))}
+          </div>
+
+          {/* Right */}
+          <div className="flex items-center gap-1">
+            <button onClick={toggle} aria-label="Toggle theme" className="w-8 h-8 flex items-center justify-center rounded-xl text-stone-500 dark:text-stone-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button onClick={go("/app/preferences")} aria-label="Preferences" className={`hidden md:flex w-8 h-8 items-center justify-center rounded-xl transition-colors ${active("/app/preferences") ? "bg-black/5 dark:bg-white/10 text-stone-900 dark:text-stone-100" : "text-stone-500 dark:text-stone-400 hover:bg-black/5 dark:hover:bg-white/5"}`}>
+              <Settings className="w-4 h-4" />
+            </button>
+            <div className="mx-1 h-4 w-px bg-stone-200 dark:bg-stone-700/60" />
+            <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
+          </div>
+        </nav>
+      </div>
+
+      {/* Bottom nav — mobile only */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 flex items-center justify-around px-2 pb-[env(safe-area-inset-bottom)] border-t border-black/[0.06] dark:border-white/[0.06] bg-white/85 dark:bg-[#0e0e0e]/90 backdrop-blur-2xl h-16">
+        {NAV.map(({ label, icon: Icon, href }) => (
+          <button key={href} onClick={go(href)} className="flex flex-col items-center justify-center flex-1 h-full gap-1">
+            <div className={iconCls(href)}><Icon className="w-5 h-5" /><Dot show={active(href)} /></div>
+            <span className={labelCls(href)}>{label}</span>
           </button>
-        </div>
-
-        {/* Right */}
-        <div className="flex items-center">
-
-          {/* Shelf */}
-          <button
-            onClick={() => router.push("/app/shelf")}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all duration-150 active:scale-[0.97]
-              ${pathname === "/app/shelf"
-                ? "bg-stone-100 dark:bg-stone-700/60 text-stone-900 dark:text-stone-100"
-                : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800/60"
-              }`}
-          >
-            <Library className="w-5 h-5 flex-shrink-0" />
-            <span className="hidden sm:inline leading-none">Shelf</span>
-          </button>
-
-          {/* Theme */}
-          <button
-            onClick={toggle}
-            className="w-8 h-8 flex items-center justify-center rounded-xl
-              text-stone-400 hover:text-stone-700 dark:text-stone-500 dark:hover:text-stone-200
-              hover:bg-stone-100 dark:hover:bg-stone-800/60
-              active:scale-[0.97] transition-all duration-150"
-            aria-label="Toggle theme"
-          >
-            <span key={theme} className="animate-theme-icon">
-              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </span>
-          </button>
-
-          {/* Settings */}
-          <button
-            onClick={() => router.push("/app/preferences")}
-            className={`w-8 h-8 flex items-center justify-center rounded-xl active:scale-[0.97] transition-all duration-150
-              ${pathname === "/app/preferences"
-                ? "bg-stone-100 dark:bg-stone-700/60 text-stone-900 dark:text-stone-100"
-                : "text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800/60"
-              }`}
-            aria-label="Preferences"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-
-          {/* Divider */}
-          <div className="w-px h-4 bg-stone-200 dark:bg-stone-700/60 mx-1.5" />
-
-          {/* Avatar */}
-          <UserButton appearance={{ elements: { avatarBox: "w-6 h-6" } }} />
-        </div>
+        ))}
       </nav>
-    </div>
+    </>
   );
 }
