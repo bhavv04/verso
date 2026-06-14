@@ -43,7 +43,7 @@ export default function Navbar() {
               </button>
             )}
             <button onClick={go("/app")} className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-black/[0.06] dark:ring-white/[0.08] group-hover:ring-amber-400/40 transition-all">
+              <div className="w-8 h-8 rounded-lg overflow-hidden">
                 <img src="/verrere.png" alt="Verso" className="w-full h-full object-contain" />
               </div>
               <span className="hidden sm:block text-[15px] font-semibold tracking-[-0.02em] text-stone-900 dark:text-stone-100">verso</span>
